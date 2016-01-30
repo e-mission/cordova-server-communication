@@ -30,10 +30,6 @@ static NSString* kSetStatsPath = @"/stats/set";
 static NSString* kCustomSettingsPath = @"/profile/settings";
 static NSString* kRegisterPath = @"/profile/create";
 
-static inline NSString* NSStringFromBOOL(BOOL aBool) {
-    return aBool? @"YES" : @"NO";
-}
-
 @interface CommunicationHelper() <AuthCompletionDelegate> {
 }
 @end
