@@ -9,10 +9,9 @@
 //  Copyright (c) 2014 Kalyanaraman Shankari. All rights reserved.
 //
 
-#import "CommunicationHelper.h"
+#import "BEMCommunicationHelper.h"
 #import "AuthCompletionHandler.h"
-#import "Constants.h"
-#import "ConnectionSettings.h"
+#import "BEMConnectionSettings.h"
 
 #import <GoogleOpenSource/GoogleOpenSource.h>
 
@@ -137,7 +136,7 @@ static NSString* kRegisterPath = @"/profile/create";
         return;
     }
 
-    [[AuthCompletionHandler sharedInstance] getValidAuth:^((GTMOAuth2Authentication *)auth error:(NSError*)error) {
+    [[AuthCompletionHandler sharedInstance] getValidAuth:^(GTMOAuth2Authentication *auth,NSError* error) {
         if (error != NULL) {
             self.mCompletionHandler(jsonData, NULL, error);
         } else {
