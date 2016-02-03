@@ -20,14 +20,13 @@ var ServerCommunication = {
      * communication with other services, we can use the standard HTTP
      * libraries from our javascript framework.
      */
-    pushGetJson: function(relativeURL, messageFiller, successCallback, errorCallback) {
+    pushGetJSON: function(relativeURL, messageFiller, successCallback, errorCallback) {
         var request = new XMLHttpRequest();
-        request.setRequestHeader("Content-Type", "application/json");
 
         request.onreadystatechange = function() {
             if(request.readyState == request.DONE) {
                 if (request.status == 200) {
-                    var resultObj = JSON.parse(response.responseText);
+                    var resultObj = JSON.parse(request.responseText);
                     successCallback(resultObj);
                 } else {
                     errorCallback(request.statusText);
@@ -37,13 +36,14 @@ var ServerCommunication = {
             }
         };
         window.cordova.plugins.BEMConnectionSettings.getSettings(function(settings) {
-            var fullURL = settings.connectUrl + relativeURL;
+            var fullURL = settings.connectURL + relativeURL;
             window.cordova.plugins.BEMJWTAuth.getJWT(function(token) {
                 message = {};
                 message.user = token;
                 messageFiller(message);
                 request.open("POST", fullURL, true);
-                request.send(message);
+                request.setRequestHeader("Content-Type", "application/json");
+                request.send(JSON.stringify(message));
             }, function(error) {
                 errorCallback(error);
             })
@@ -55,13 +55,13 @@ var ServerCommunication = {
         var msgFiller = function(message) {
             message[objectLabel] = objectJSON;
         };
-        pushGetJSON(relativeUrl, msgFiller, successCallback, errorCallback);
+        ServerCommuniation.pushGetJSON(relativeUrl, msgFiller, successCallback, errorCallback);
     },
     getUserPersonalData: function(relativeUrl, successCallback, errorCallback) {
         var msgFiller = function(message) {
             // nop. we don't really send any data for what are effectively get calls
         };
-        pushGetJSON(relativeUrl, msgFiller, successCallback, errorCallback);
+        ServerCommunication.pushGetJSON(relativeUrl, msgFiller, successCallback, errorCallback);
     }
 }
 
