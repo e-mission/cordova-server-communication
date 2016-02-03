@@ -19,10 +19,12 @@
     <clobbers target="cordova.plugins.BEMServerComm" />
   </js-module>
 
+  <!--
   <dependency id="edu.berkeley.eecs.emission.cordova.unifiedlogger"
                 url="https://github.com/e-mission/cordova-unified-logger.git"/>
   <dependency id="edu.berkeley.eecs.emission.cordova.settings"
                 url="https://github.com/e-mission/cordova-connection-settings.git"/>
+  -->
 
   <platform name="android">
 
