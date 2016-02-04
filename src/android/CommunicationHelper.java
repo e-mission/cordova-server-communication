@@ -1,4 +1,4 @@
-package edu.berkeley.eecs.cordova.comm;
+package edu.berkeley.eecs.emission.cordova.comm;
 
 import android.content.Context;
 import android.net.http.AndroidHttpClient;
