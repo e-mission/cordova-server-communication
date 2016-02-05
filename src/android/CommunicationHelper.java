@@ -1,4 +1,4 @@
-package edu.berkeley.eecs.cordova.comm;
+package edu.berkeley.eecs.emission.cordova.comm;
 
 import android.content.Context;
 import android.net.http.AndroidHttpClient;
@@ -19,7 +19,12 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 
+import edu.berkeley.eecs.emission.cordova.connectionsettings.ConnectionSettings;
+import edu.berkeley.eecs.emission.cordova.jwtauth.GoogleAccountManagerAuth;
+import edu.berkeley.eecs.emission.cordova.jwtauth.UserProfile;
 import edu.berkeley.eecs.emission.cordova.unifiedlogger.Log;
+
+import edu.berkeley.eecs.emission.R;
 
 public class CommunicationHelper {
     public static final String TAG = "CommunicationHelper";
@@ -115,9 +120,9 @@ public class CommunicationHelper {
             }
             result = builder.toString();
             System.out.println("Result Summary JSON = "+
-                result.substring(0, Math.min(200, result.length()) + " length "+result.length());
+                result.substring(0, Math.min(200, result.length())) + " length "+result.length());
             Log.i(ctxt, TAG, "Result Summary JSON = "+
-                result.substring(0, Math.min(200, result.length()) + " length "+result.length());
+                result.substring(0, Math.min(200, result.length())) + " length "+result.length());
             in.close();
         } else {
             Log.e(ctxt, R.class.toString(),"Failed to get JSON object");

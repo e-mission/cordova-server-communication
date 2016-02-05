@@ -9,10 +9,9 @@
 //  Copyright (c) 2014 Kalyanaraman Shankari. All rights reserved.
 //
 
-#import "CommunicationHelper.h"
+#import "BEMCommunicationHelper.h"
 #import "AuthCompletionHandler.h"
-#import "Constants.h"
-#import "ConnectionSettings.h"
+#import "BEMConnectionSettings.h"
 
 #import <GoogleOpenSource/GoogleOpenSource.h>
 
@@ -29,10 +28,6 @@ static NSString* kMovesCallbackPath = @"/movesCallback";
 static NSString* kSetStatsPath = @"/stats/set";
 static NSString* kCustomSettingsPath = @"/profile/settings";
 static NSString* kRegisterPath = @"/profile/create";
-
-static inline NSString* NSStringFromBOOL(BOOL aBool) {
-    return aBool? @"YES" : @"NO";
-}
 
 @interface CommunicationHelper() <AuthCompletionDelegate> {
 }
@@ -141,7 +136,7 @@ static inline NSString* NSStringFromBOOL(BOOL aBool) {
         return;
     }
 
-    [[AuthCompletionHandler sharedInstance] getValidAuth:^((GTMOAuth2Authentication *)auth error:(NSError*)error) {
+    [[AuthCompletionHandler sharedInstance] getValidAuth:^(GTMOAuth2Authentication *auth,NSError* error) {
         if (error != NULL) {
             self.mCompletionHandler(jsonData, NULL, error);
         } else {

@@ -19,11 +19,13 @@
     <clobbers target="cordova.plugins.BEMServerComm" />
   </js-module>
 
+  <!--
   <dependency id="edu.berkeley.eecs.emission.cordova.unifiedlogger"
                 url="https://github.com/e-mission/cordova-unified-logger.git"/>
   <dependency id="edu.berkeley.eecs.emission.cordova.settings"
                 url="https://github.com/e-mission/cordova-connection-settings.git"/>
-
+  -->
+  <framework src="src/android/httplib.gradle" custom="true" type="gradleReference" />
   <platform name="android">
 
     <config-file target="res/xml/config.xml" parent="/*">
@@ -33,7 +35,6 @@
     </config-file>
 
     <source-file src="src/android/CommunicationHelper.java" target-dir="src/edu/berkeley/eecs/emission/cordova/comm"/>
-    <source-file src="src/android/ConnectionSettings.java" target-dir="src/edu/berkeley/eecs/emission/cordova/comm"/>
   </platform>
 
   <platform name="ios">
