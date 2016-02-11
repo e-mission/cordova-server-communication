@@ -136,14 +136,95 @@ static NSString* kRegisterPath = @"/profile/create";
         return;
     }
 
-    [[AuthCompletionHandler sharedInstance] getValidAuth:^(GTMOAuth2Authentication *auth,NSError* error) {
-        if (error != NULL) {
-            self.mCompletionHandler(jsonData, NULL, error);
+    // Next, we need to check whether the user is logged in. If not, we need to re-login
+    // This will call the finishedWithAuth callback
+    GTMOAuth2Authentication* currAuth = [AuthCompletionHandler sharedInstance].currAuth;
+    if (currAuth == NULL) {
+        [self tryToAuthenticate:jsonData];
+    } else {
+        BOOL expired = ([currAuth.expirationDate compare:[NSDate date]] == NSOrderedAscending);
+        // The access token may not have expired, but the id token may not be available because the app has been restarted,
+        // so it is not in memory, and the ID token is not stored in the keychain. It is a real pain to store the ID token
+        // in the keychain through subclassing, so let's just try to refresh the token anyway
+        expired = expired || ([AuthCompletionHandler sharedInstance].getIdToken == NULL);
+        NSLog(@"currAuth = %@, canAuthorize = %@, expiresIn = %@, expirationDate = %@, expired = %@",
+              currAuth, NSStringFromBOOL(currAuth.canAuthorize), currAuth.expiresIn, currAuth.expirationDate,
+              NSStringFromBOOL(expired));
+        if (currAuth.canAuthorize != YES) {
+            NSLog(@"Unable to refresh token, trying to re-authenticate");
+            // Not sure why we would get canAuthorize be null, but I assume that we re-login in that case
+            [self tryToAuthenticate:jsonData];
         } else {
-            // TODO: have postToHost take the auth token as input instead of re-reading it
-            [self postToHost];
+            if (expired) {
+                NSLog(@"Existing auth token expired, refreshing...");
+                // Need to refresh the token
+                [currAuth authorizeRequest:NULL completionHandler:^(NSError *error) {
+                    if (error != NULL) {
+                        // modify some kind of error count and notify that user needs to sign in again
+                        NSLog(@"Error while refreshing token, need to modify error count");
+                        self.mCompletionHandler(jsonData, nil, error);
+                    } else {
+                        NSLog(@"Refresh completion block called, refreshed token is %@", currAuth);
+                        BOOL stillExpired = ([currAuth.expirationDate compare:[NSDate date]] == NSOrderedAscending);
+                        if (stillExpired) {
+                            // Although we called refresh, the token is still expired. Let's try to call a different
+                            // refresh method
+                            NSLog(@"Existing auth token still expired after first refresh attempt, trying different attempt...");
+                            /*
+                            [currAuth authorizeRequest:NULL
+                                              delegate:self
+                                     didFinishSelector:@selector(finishRefreshSelector:)];
+                             */
+                            NSDictionary *userInfo = @{
+                                                       NSLocalizedDescriptionKey: NSLocalizedString(@"Refresh token still expired.", nil),
+                                                       NSLocalizedFailureReasonErrorKey: NSLocalizedString(@"Unknown.", nil),
+                                                       NSLocalizedRecoverySuggestionErrorKey: NSLocalizedString(@"Sign out and Sign in again.", nil)
+                                                       };
+                            // TODO: Make a domain and error class
+                            NSError *refreshError = [NSError errorWithDomain:errorDomain code:authFailedNeedUserInput userInfo:userInfo];
+                            self.mCompletionHandler(NULL, NULL, refreshError);
+                        } else {
+                            NSLog(@"Refresh is really done, posting to host");
+                            assert(error == NULL);
+                            [self postToHost];
+                        }
+                    }
+                }];
+            } else {
+                NSLog(@"Existing auth token not expired, posting to host");
+                assert(expired == FALSE);
+                [self postToHost];
+            }
         }
-    }];
+    }
+}
+
+- (void)tryToAuthenticate:(NSData*)jsonData {
+    NSLog(@"tryToAuthenticate called");
+    [[AuthCompletionHandler sharedInstance] registerFinishDelegate:self];
+    BOOL silentAuthResult = [[AuthCompletionHandler sharedInstance] trySilentAuthentication];
+    if (silentAuthResult == NO) {
+        NSLog(@"Need user input for authentication, need to signal user somehow");
+        [[AuthCompletionHandler sharedInstance] unregisterFinishDelegate:self];
+        NSDictionary *userInfo = @{
+                                   NSLocalizedDescriptionKey: NSLocalizedString(@"User authentication failed.", nil),
+                                   NSLocalizedFailureReasonErrorKey: NSLocalizedString(@"User information not available in keychain.", nil),
+                                   NSLocalizedRecoverySuggestionErrorKey: NSLocalizedString(@"Need to login and authorize access to email address.", nil)
+                                   };
+        // TODO: Make a domain and error class
+        NSError *authError = [NSError errorWithDomain:errorDomain code:authFailedNeedUserInput userInfo:userInfo];
+        self.mCompletionHandler(jsonData, NULL, authError);
+    } else {
+        NSLog(@"callback should be called, we will deal with it there");
+        // So far, callback has not taken a long time...
+        // But callback may take a long time. In that case, we may want to return early.
+        // Also, callback will invoke mCompletionHandler in a separate thread, which won't
+        // work because all callbacks have to be in the main thread for this to succeed
+        // So we say that we are done here with no data
+        // However, in the callback handler, we set the backgroundFetchInterval to 10 mins
+        // So we will be called again, and won't have to invoke this call then
+        // mCompletionHandler(NULL, NULL, NULL);
+    }
 }
 
 - (void)postToHost {
@@ -185,8 +266,6 @@ static NSString* kRegisterPath = @"/profile/create";
     }
 }
 
-/*
-
 - (void)finishedWithAuth:(GTMOAuth2Authentication *)auth error:(NSError *)error {
     NSLog(@"CommunicationHelper.finishedWithAuth called with auth = %@ and error = %@", auth, error);
     if (error != NULL) {
@@ -218,7 +297,5 @@ static NSString* kRegisterPath = @"/profile/create";
     }
     
 }
-
-*/
 
 @end
