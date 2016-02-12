@@ -12,6 +12,7 @@
 #import "BEMCommunicationHelper.h"
 #import "AuthCompletionHandler.h"
 #import "BEMConnectionSettings.h"
+#import "BEMConstants.h"
 
 #import <GoogleOpenSource/GoogleOpenSource.h>
 
@@ -28,6 +29,10 @@ static NSString* kMovesCallbackPath = @"/movesCallback";
 static NSString* kSetStatsPath = @"/stats/set";
 static NSString* kCustomSettingsPath = @"/profile/settings";
 static NSString* kRegisterPath = @"/profile/create";
+
+static inline NSString* NSStringFromBOOL(BOOL aBool) {
+    return aBool? @"YES" : @"NO";
+}
 
 @interface CommunicationHelper() <AuthCompletionDelegate> {
 }
@@ -266,7 +271,7 @@ static NSString* kRegisterPath = @"/profile/create";
     }
 }
 
-- (void)finishedWithAuth:(GTMOAuth2Authentication *)auth error:(NSError *)error {
+- (void)finishedWithAuth:(GTMOAuth2Authentication *)auth error:(NSError *)error usingController:(UIViewController *)viewController {
     NSLog(@"CommunicationHelper.finishedWithAuth called with auth = %@ and error = %@", auth, error);
     if (error != NULL) {
         NSLog(@"Got error %@ while authenticating", error);
