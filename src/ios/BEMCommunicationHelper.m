@@ -13,6 +13,7 @@
 #import "AuthCompletionHandler.h"
 #import "BEMConnectionSettings.h"
 #import "BEMConstants.h"
+#import "LocalNotificationManager.h"
 
 #import <GoogleOpenSource/GoogleOpenSource.h>
 
@@ -128,7 +129,7 @@ static inline NSString* NSStringFromBOOL(BOOL aBool) {
 }
 
 -(void)execute {
-    NSLog(@"CommunicationHelper.execute called!");
+    [LocalNotificationManager addNotification:@"CommunicationHelper.execute called!" showUI:FALSE];
     // First, we parse the dictionary because we need the data to call the completion function anyway
     // Note that this data does not contain the user token, and should not be sent to the server
     NSError *parseError;
@@ -136,7 +137,9 @@ static inline NSString* NSStringFromBOOL(BOOL aBool) {
                                                        options:kNilOptions
                                                          error:&parseError];
     if (parseError != NULL) {
-        NSLog(@"parseError = %@, calling completion handler", parseError);
+        [LocalNotificationManager addNotification:[NSString stringWithFormat:
+                                                   @"parseError = %@, calling completion handler",
+                                                   parseError]];
         self.mCompletionHandler(jsonData, NULL, parseError);
         return;
     }
@@ -152,29 +155,35 @@ static inline NSString* NSStringFromBOOL(BOOL aBool) {
         // so it is not in memory, and the ID token is not stored in the keychain. It is a real pain to store the ID token
         // in the keychain through subclassing, so let's just try to refresh the token anyway
         expired = expired || ([AuthCompletionHandler sharedInstance].getIdToken == NULL);
-        NSLog(@"currAuth = %@, canAuthorize = %@, expiresIn = %@, expirationDate = %@, expired = %@",
+        [LocalNotificationManager addNotification:[NSString stringWithFormat:
+                                                   @"currAuth = %@, canAuthorize = %@, expiresIn = %@, expirationDate = %@, expired = %@",
               currAuth, NSStringFromBOOL(currAuth.canAuthorize), currAuth.expiresIn, currAuth.expirationDate,
-              NSStringFromBOOL(expired));
+                                                   NSStringFromBOOL(expired)] showUI:FALSE];
         if (currAuth.canAuthorize != YES) {
-            NSLog(@"Unable to refresh token, trying to re-authenticate");
+            [LocalNotificationManager addNotification:[NSString stringWithFormat:
+                                                       @"Unable to refresh token, trying to re-authenticate"] showUI:FALSE];
             // Not sure why we would get canAuthorize be null, but I assume that we re-login in that case
             [self tryToAuthenticate:jsonData];
         } else {
             if (expired) {
-                NSLog(@"Existing auth token expired, refreshing...");
+                [LocalNotificationManager addNotification:[NSString stringWithFormat:
+                                                           @"Existing auth token expired, refreshing"] showUI:FALSE];
                 // Need to refresh the token
                 [currAuth authorizeRequest:NULL completionHandler:^(NSError *error) {
                     if (error != NULL) {
+                        [LocalNotificationManager addNotification:[NSString stringWithFormat:
+                                                                   @"Error %@ while refreshing token, need to notify user", error] showUI:FALSE];
                         // modify some kind of error count and notify that user needs to sign in again
-                        NSLog(@"Error while refreshing token, need to modify error count");
                         self.mCompletionHandler(jsonData, nil, error);
                     } else {
-                        NSLog(@"Refresh completion block called, refreshed token is %@", currAuth);
+                        [LocalNotificationManager addNotification:[NSString stringWithFormat:
+                                                                   @"Refresh completion block called, refreshed token is %@", currAuth] showUI:FALSE];
                         BOOL stillExpired = ([currAuth.expirationDate compare:[NSDate date]] == NSOrderedAscending);
                         if (stillExpired) {
                             // Although we called refresh, the token is still expired. Let's try to call a different
                             // refresh method
-                            NSLog(@"Existing auth token still expired after first refresh attempt, trying different attempt...");
+                            [LocalNotificationManager addNotification:[NSString stringWithFormat:
+                                                                       @"Existing auth token still expired after first refresh attempt, notifying user"] showUI:FALSE];
                             /*
                             [currAuth authorizeRequest:NULL
                                               delegate:self
@@ -189,14 +198,16 @@ static inline NSString* NSStringFromBOOL(BOOL aBool) {
                             NSError *refreshError = [NSError errorWithDomain:errorDomain code:authFailedNeedUserInput userInfo:userInfo];
                             self.mCompletionHandler(NULL, NULL, refreshError);
                         } else {
-                            NSLog(@"Refresh is really done, posting to host");
+                            [LocalNotificationManager addNotification:[NSString stringWithFormat:
+                                                                       @"Refresh is realy done, posting to host"] showUI:FALSE];
                             assert(error == NULL);
                             [self postToHost];
                         }
                     }
                 }];
             } else {
-                NSLog(@"Existing auth token not expired, posting to host");
+                [LocalNotificationManager addNotification:[NSString stringWithFormat:
+                                                           @"Existing auth token not expired, posting to host"] showUI:FALSE];
                 assert(expired == FALSE);
                 [self postToHost];
             }
@@ -205,11 +216,13 @@ static inline NSString* NSStringFromBOOL(BOOL aBool) {
 }
 
 - (void)tryToAuthenticate:(NSData*)jsonData {
-    NSLog(@"tryToAuthenticate called");
+    [LocalNotificationManager addNotification:[NSString stringWithFormat:
+                                               @"tryToAuthenticate called"] showUI:FALSE];
     [[AuthCompletionHandler sharedInstance] registerFinishDelegate:self];
     BOOL silentAuthResult = [[AuthCompletionHandler sharedInstance] trySilentAuthentication];
     if (silentAuthResult == NO) {
-        NSLog(@"Need user input for authentication, need to signal user somehow");
+        [LocalNotificationManager addNotification:[NSString stringWithFormat:
+                                                   @"Need user input for authentication, need to signal user somehow"] showUI:FALSE];
         [[AuthCompletionHandler sharedInstance] unregisterFinishDelegate:self];
         NSDictionary *userInfo = @{
                                    NSLocalizedDescriptionKey: NSLocalizedString(@"User authentication failed.", nil),
@@ -220,6 +233,9 @@ static inline NSString* NSStringFromBOOL(BOOL aBool) {
         NSError *authError = [NSError errorWithDomain:errorDomain code:authFailedNeedUserInput userInfo:userInfo];
         self.mCompletionHandler(jsonData, NULL, authError);
     } else {
+        [LocalNotificationManager addNotification:[NSString stringWithFormat:
+                                                   @"callback should be called, we will deal with it there"]
+                                           showUI:FALSE];
         NSLog(@"callback should be called, we will deal with it there");
         // So far, callback has not taken a long time...
         // But callback may take a long time. In that case, we may want to return early.
@@ -233,7 +249,8 @@ static inline NSString* NSStringFromBOOL(BOOL aBool) {
 }
 
 - (void)postToHost {
-    NSLog(@"postToHost called with url = %@", self.mUrl);
+    [LocalNotificationManager addNotification:[NSString stringWithFormat:
+                                               @"postToHost called with url = %@", self.mUrl] showUI:FALSE];
     NSMutableURLRequest *request = [[NSMutableURLRequest alloc]
                                     initWithURL:self.mUrl
                                     cachePolicy:NSURLRequestUseProtocolCachePolicy timeoutInterval:500];
@@ -286,17 +303,20 @@ static inline NSString* NSStringFromBOOL(BOOL aBool) {
 - (void)finishRefreshSelector:(GTMOAuth2Authentication *)auth
                       request:(NSMutableURLRequest *)request
             finishedWithError:(NSError *)error {
-    NSLog(@"CommunicationHelper.finishRefreshSelector called with auth = %@, request = %@, error = %@",
-          auth, request, error);
+    [LocalNotificationManager addNotification:[NSString stringWithFormat:
+                                               @"CommunicationHelper.finishRefreshSelector called with auth = %@, request = %@, error = %@", auth, request, error] showUI:FALSE];
+
     if (error != NULL) {
         self.mCompletionHandler(NULL, NULL, error);
     } else {
         BOOL stillExpired = ([auth.expirationDate compare:[NSDate date]] == NSOrderedAscending);
         if (stillExpired) {
-            NSLog(@"No more methods to try, I GIVE UP!");
+            [LocalNotificationManager addNotification:[NSString stringWithFormat:
+                                                       @"No more methods to try, I GIVE UP!"] showUI:TRUE];
         } else {
             // Check to see whether the sharedInstance auth token has been updated
-            NSLog(@"Auth token in the shared instance is %@", [AuthCompletionHandler sharedInstance].currAuth);
+            [LocalNotificationManager addNotification:[NSString stringWithFormat:
+                                                       @"Auth token in the shared instance is %@, posting to host", [AuthCompletionHandler sharedInstance].currAuth] showUI:FALSE];
             [self postToHost];
         }
     }
