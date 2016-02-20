@@ -21,35 +21,9 @@ var ServerCommunication = {
      * libraries from our javascript framework.
      */
     pushGetJSON: function(relativeURL, messageFiller, successCallback, errorCallback) {
-        var request = new XMLHttpRequest();
-
-        request.onreadystatechange = function() {
-            if(request.readyState == request.DONE) {
-                if (request.status == 200) {
-                    var resultObj = JSON.parse(request.responseText);
-                    successCallback(resultObj);
-                } else {
-                    errorCallback(request.statusText);
-                }
-            } else {
-                console.log("during HTTP post, state "+request.readyState);
-            }
-        };
-        window.cordova.plugins.BEMConnectionSettings.getSettings(function(settings) {
-            var fullURL = settings.connectURL + relativeURL;
-            window.cordova.plugins.BEMJWTAuth.getJWT(function(token) {
-                message = {};
-                message.user = token;
-                messageFiller(message);
-                request.open("POST", fullURL, true);
-                request.setRequestHeader("Content-Type", "application/json");
-                request.send(JSON.stringify(message));
-            }, function(error) {
-                errorCallback(error);
-            })
-        }, function(error) {
-            errorCallback(error);
-        });
+        filledMessage = {};
+        messageFiller(filledMessage);
+        exec(successCallback, errorCallback, "ServerComm", "pushGetJSON", [relativeURL, filledMessage]);
     },
     pushJSON: function(relativeUrl, objectLabel, objectJSON, successCallback, errorCallback) {
         var msgFiller = function(message) {

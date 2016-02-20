@@ -114,6 +114,17 @@ static inline NSString* NSStringFromBOOL(BOOL aBool) {
     [executor execute];
 }
 
++(void)pushGetJSON:(NSDictionary*)toSend toURL:(NSURL*)relativeURL completionHandler:(void (^)(NSData *data, NSURLResponse *response, NSError *error))completionHandler {
+    NSMutableDictionary *toPush = [NSMutableDictionary dictionaryWithDictionary:toSend];
+    
+    NSURL* kBaseURL = [[ConnectionSettings sharedInstance] getConnectUrl];
+    NSURL* absoluteURL = [NSURL URLWithString:relativeURL
+                                 relativeToURL:kBaseURL];
+    
+    CommunicationHelper *executor = [[CommunicationHelper alloc] initPost:kUsercachePutURL data:toPush completionHandler:completionHandler];
+    [executor execute];
+}
+
 +(void)getData:(NSURL*)url completionHandler:(void (^)(NSData *data, NSURLResponse *response, NSError *error))completionHandler {
     NSURLSession *sharedSession = [NSURLSession sharedSession];
     NSURLSessionDataTask *task = [sharedSession dataTaskWithURL:url completionHandler:completionHandler];

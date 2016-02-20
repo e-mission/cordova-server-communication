@@ -69,6 +69,56 @@ public class CommunicationHelper {
         return rawHTML;
     }
 
+    /*
+     * The other methods here take in a fullURL and return a string,
+     * respectively.  The plugin interface passes in a relative URL and returns
+     * a JSONObject. For now, let us have this be consistent with the other
+     * calls here, and glue things together in the plugin.
+     */
+    public static String pushGetJSON(Context ctxt, String fullURL,
+            Object filledJsonObject)
+            throws IOException, JSONException {
+
+        // Initialize the message
+        String result = "";
+        HttpPost msg = new HttpPost(fullURL);
+        System.out.println("Posting data to " + msg.getURI());
+        msg.setHeader("Content-Type", "application/json");
+
+        // Fill in the object
+        final String userName = UserProfile.getInstance(ctxt).getUserEmail();
+        final String userToken = GoogleAccountManagerAuth.getServerToken(ctxt, userName);
+        filledJsonObject.put("user", userToken);
+        msg.setEntity(new StringEntity(toPush.toString()));
+
+        // Perform the operation
+        AndroidHttpClient connection = AndroidHttpClient.newInstance(ctxt.getString(R.string.app_name));
+        HttpResponse response = connection.execute(msg);
+        StatusLine statusLine = response.getStatusLine();
+        Log.i(ctxt, TAG, "Got response "+response+" with status "+statusLine);
+        int statusCode = statusLine.getStatusCode();
+
+        if(statusCode == 200){
+            BufferedReader in = new BufferedReader(new InputStreamReader(response.getEntity().getContent()));
+            StringBuilder builder = new StringBuilder();
+            String currLine = null;
+            while ((currLine = in.readLine()) != null) {
+                builder.append(currLine+"\n");
+            }
+            result = builder.toString();
+            System.out.println("Result Summary JSON = "+
+                result.substring(0, Math.min(200, result.length())) + " length "+result.length());
+            Log.i(ctxt, TAG, "Result Summary JSON = "+
+                result.substring(0, Math.min(200, result.length())) + " length "+result.length());
+            in.close();
+        } else {
+            Log.e(ctxt, R.class.toString(),"Failed to get JSON object");
+            throw new IOException();
+        }
+        connection.close();
+        return result;
+    }
+
     public static void pushJSON(Context ctxt, String fullURL, String userToken,
                                 String objectLabel, Object jsonObjectOrArray)
             throws IOException, JSONException {

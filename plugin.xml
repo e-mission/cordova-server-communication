@@ -30,22 +30,25 @@
 
     <config-file target="res/xml/config.xml" parent="/*">
       <feature name="ServerComm">
-        <param name="android-package" value="edu.berkeley.eecs.emission.cordova.comm.CommunicationHelper"/>
+        <param name="android-package" value="edu.berkeley.eecs.emission.cordova.comm.CommunicationHelperPlugin"/>
       </feature>
     </config-file>
 
     <source-file src="src/android/CommunicationHelper.java" target-dir="src/edu/berkeley/eecs/emission/cordova/comm"/>
+    <source-file src="src/android/CommunicationHelperPlugin.java" target-dir="src/edu/berkeley/eecs/emission/cordova/comm"/>
   </platform>
 
   <platform name="ios">
     
     <config-file target="config.xml" parent="/*">
       <feature name="ServerComm">
-        <param name="ios-package" value="BEMCommunicationHelper" />
+        <param name="ios-package" value="BEMCommunicationHelperPlugin" />
       </feature>
     </config-file>
 
     <header-file src="src/ios/BEMCommunicationHelper.h"/>
     <source-file src="src/ios/BEMCommunicationHelper.m"/>
+    <header-file src="src/ios/BEMCommunicationHelperPlugin.h"/>
+    <source-file src="src/ios/BEMCommunicationHelperPlugin.m"/>
   </platform>
 </plugin>
