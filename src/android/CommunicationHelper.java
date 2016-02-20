@@ -76,7 +76,7 @@ public class CommunicationHelper {
      * calls here, and glue things together in the plugin.
      */
     public static String pushGetJSON(Context ctxt, String fullURL,
-            Object filledJsonObject)
+            JSONObject filledJsonObject)
             throws IOException, JSONException {
 
         // Initialize the message
@@ -89,7 +89,7 @@ public class CommunicationHelper {
         final String userName = UserProfile.getInstance(ctxt).getUserEmail();
         final String userToken = GoogleAccountManagerAuth.getServerToken(ctxt, userName);
         filledJsonObject.put("user", userToken);
-        msg.setEntity(new StringEntity(toPush.toString()));
+        msg.setEntity(new StringEntity(filledJsonObject.toString()));
 
         // Perform the operation
         AndroidHttpClient connection = AndroidHttpClient.newInstance(ctxt.getString(R.string.app_name));

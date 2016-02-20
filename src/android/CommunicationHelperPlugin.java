@@ -7,6 +7,7 @@ import org.json.JSONObject;
 
 import android.content.Context;
 import edu.berkeley.eecs.emission.cordova.comm.CommunicationHelper;
+import edu.berkeley.eecs.emission.cordova.connectionsettings.ConnectionSettings;
 
 public class CommunicationHelperPlugin extends CordovaPlugin {
     @Override
@@ -17,7 +18,7 @@ public class CommunicationHelperPlugin extends CordovaPlugin {
                 String relativeURL = data.getString(0);
                 JSONObject filledMessage = data.getJSONObject(1);
 
-                String commuteTrackerHost = ConnectionSettings.getConnectURL(cachedContext);
+                String commuteTrackerHost = ConnectionSettings.getConnectURL(ctxt);
                 String fullURL = commuteTrackerHost + relativeURL;
 
                 String resultString = CommunicationHelper.pushGetJSON(ctxt, fullURL, filledMessage);
