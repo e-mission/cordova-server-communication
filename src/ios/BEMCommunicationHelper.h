@@ -22,6 +22,7 @@
 +(void)phone_to_server:(NSArray*) entriesToPush completionHandler:(void (^)(NSData *data, NSURLResponse *response, NSError *error))completionHandler;;
 
 // Generic GET and POST methods
++(void)pushGetJSON:(NSDictionary*)toSend toURL:(NSString*)relativeURL completionHandler:(void (^)(NSData *data, NSURLResponse *response, NSError *error))completionHandler;
 +(void)getData:(NSURL *)url completionHandler:(void (^)(NSData *data, NSURLResponse *response, NSError *error))completionHandler;
 -(id)initPost:(NSURL *)url data:(NSMutableDictionary*)jsonDict completionHandler:(void (^)(NSData *data, NSURLResponse *response, NSError *error))completionHandler;
 

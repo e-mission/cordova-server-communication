@@ -114,6 +114,17 @@ static inline NSString* NSStringFromBOOL(BOOL aBool) {
     [executor execute];
 }
 
++(void)pushGetJSON:(NSDictionary*)toSend toURL:(NSString*)relativeURL completionHandler:(void (^)(NSData *data, NSURLResponse *response, NSError *error))completionHandler {
+    NSMutableDictionary *toPush = [NSMutableDictionary dictionaryWithDictionary:toSend];
+    
+    NSURL* kBaseURL = [[ConnectionSettings sharedInstance] getConnectUrl];
+    NSURL* absoluteURL = [NSURL URLWithString:relativeURL
+                                 relativeToURL:kBaseURL];
+    
+    CommunicationHelper *executor = [[CommunicationHelper alloc] initPost:absoluteURL data:toPush completionHandler:completionHandler];
+    [executor execute];
+}
+
 +(void)getData:(NSURL*)url completionHandler:(void (^)(NSData *data, NSURLResponse *response, NSError *error))completionHandler {
     NSURLSession *sharedSession = [NSURLSession sharedSession];
     NSURLSessionDataTask *task = [sharedSession dataTaskWithURL:url completionHandler:completionHandler];
@@ -149,7 +160,10 @@ static inline NSString* NSStringFromBOOL(BOOL aBool) {
     GTMOAuth2Authentication* currAuth = [AuthCompletionHandler sharedInstance].currAuth;
     if (currAuth == NULL) {
         [self tryToAuthenticate:jsonData];
-    } else {
+        currAuth = [AuthCompletionHandler sharedInstance].currAuth;
+    }
+    
+    if (currAuth != NULL) {
         BOOL expired = ([currAuth.expirationDate compare:[NSDate date]] == NSOrderedAscending);
         // The access token may not have expired, but the id token may not be available because the app has been restarted,
         // so it is not in memory, and the ID token is not stored in the keychain. It is a real pain to store the ID token
@@ -215,7 +229,7 @@ static inline NSString* NSStringFromBOOL(BOOL aBool) {
     }
 }
 
-- (void)tryToAuthenticate:(NSData*)jsonData {
+- (BOOL)tryToAuthenticate:(NSData*)jsonData {
     [LocalNotificationManager addNotification:[NSString stringWithFormat:
                                                @"tryToAuthenticate called"] showUI:FALSE];
     [[AuthCompletionHandler sharedInstance] registerFinishDelegate:self];
@@ -234,9 +248,8 @@ static inline NSString* NSStringFromBOOL(BOOL aBool) {
         self.mCompletionHandler(jsonData, NULL, authError);
     } else {
         [LocalNotificationManager addNotification:[NSString stringWithFormat:
-                                                   @"callback should be called, we will deal with it there"]
+                                                   @"ready to authenticate, checking expiration"]
                                            showUI:FALSE];
-        NSLog(@"callback should be called, we will deal with it there");
         // So far, callback has not taken a long time...
         // But callback may take a long time. In that case, we may want to return early.
         // Also, callback will invoke mCompletionHandler in a separate thread, which won't
@@ -246,6 +259,7 @@ static inline NSString* NSStringFromBOOL(BOOL aBool) {
         // So we will be called again, and won't have to invoke this call then
         // mCompletionHandler(NULL, NULL, NULL);
     }
+    return silentAuthResult;
 }
 
 - (void)postToHost {
