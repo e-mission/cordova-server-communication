@@ -14,7 +14,7 @@
         [CommunicationHelper pushGetJSON:filledMessage toURL:relativeURL completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
             if (error != NULL) {
                 [self sendError:error callBackID:callbackId];
-            }
+            } else {
             NSError *parseError;
             NSDictionary *parsedResult = [NSJSONSerialization JSONObjectWithData:data
                                                                 options:kNilOptions
@@ -26,6 +26,7 @@
                                        resultWithStatus:CDVCommandStatus_OK
                                        messageAsDictionary:parsedResult];
             [self.commandDelegate sendPluginResult:result callbackId:callbackId];
+            }
         }];
     }
     @catch (NSException *exception) {
