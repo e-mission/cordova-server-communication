@@ -7,6 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "GTMSessionFetcherService.h"
 
 @interface CommunicationHelper : NSObject
 // Wrappers for our specific functionality
@@ -31,4 +32,5 @@
 @property (nonatomic, strong) NSURL* mUrl;
 @property (nonatomic, strong) NSMutableDictionary* mJsonDict;
 @property (nonatomic, strong) void (^mCompletionHandler)(NSData *data, NSURLResponse *response, NSError *error);
+@property (nonatomic, strong) GTMSessionFetcherService* fetcherService;
 @end

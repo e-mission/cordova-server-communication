@@ -14,8 +14,7 @@
 #import "BEMConnectionSettings.h"
 #import "BEMConstants.h"
 #import "LocalNotificationManager.h"
-
-#import <GoogleOpenSource/GoogleOpenSource.h>
+#import "GTMSessionFetcher.h"
 
 // This is the base URL
 // We need to append the username to it, and then we need to authenticate the user as well
@@ -135,6 +134,7 @@ static inline NSString* NSStringFromBOOL(BOOL aBool) {
     self.mUrl = url;
     self.mJsonDict = jsonDict;
     self.mCompletionHandler = completionHandler;
+    self.fetcherService = [[GTMSessionFetcherService alloc] init];
     
     return [super init];
 }
@@ -155,112 +155,16 @@ static inline NSString* NSStringFromBOOL(BOOL aBool) {
         return;
     }
 
-    // Next, we need to check whether the user is logged in. If not, we need to re-login
-    // This will call the finishedWithAuth callback
-    GTMOAuth2Authentication* currAuth = [AuthCompletionHandler sharedInstance].currAuth;
-    if (currAuth == NULL) {
-        [self tryToAuthenticate:jsonData];
-        currAuth = [AuthCompletionHandler sharedInstance].currAuth;
-    }
-    
-    if (currAuth != NULL) {
-        BOOL expired = ([currAuth.expirationDate compare:[NSDate date]] == NSOrderedAscending);
-        // The access token may not have expired, but the id token may not be available because the app has been restarted,
-        // so it is not in memory, and the ID token is not stored in the keychain. It is a real pain to store the ID token
-        // in the keychain through subclassing, so let's just try to refresh the token anyway
-        expired = expired || ([AuthCompletionHandler sharedInstance].getIdToken == NULL);
-        [LocalNotificationManager addNotification:[NSString stringWithFormat:
-                                                   @"currAuth = %@, canAuthorize = %@, expiresIn = %@, expirationDate = %@, expired = %@",
-              currAuth, NSStringFromBOOL(currAuth.canAuthorize), currAuth.expiresIn, currAuth.expirationDate,
-                                                   NSStringFromBOOL(expired)] showUI:FALSE];
-        if (currAuth.canAuthorize != YES) {
-            [LocalNotificationManager addNotification:[NSString stringWithFormat:
-                                                       @"Unable to refresh token, trying to re-authenticate"] showUI:FALSE];
-            // Not sure why we would get canAuthorize be null, but I assume that we re-login in that case
-            [self tryToAuthenticate:jsonData];
-        } else {
-            if (expired) {
-                [LocalNotificationManager addNotification:[NSString stringWithFormat:
-                                                           @"Existing auth token expired, refreshing"] showUI:FALSE];
-                // Need to refresh the token
-                [currAuth authorizeRequest:NULL completionHandler:^(NSError *error) {
+    [[AuthCompletionHandler sharedInstance] getValidAuth:^(GTMOAuth2Authentication *auth,NSError* error) {
                     if (error != NULL) {
-                        [LocalNotificationManager addNotification:[NSString stringWithFormat:
-                                                                   @"Error %@ while refreshing token, need to notify user", error] showUI:FALSE];
-                        // modify some kind of error count and notify that user needs to sign in again
-                        self.mCompletionHandler(jsonData, nil, error);
-                    } else {
-                        [LocalNotificationManager addNotification:[NSString stringWithFormat:
-                                                                   @"Refresh completion block called, refreshed token is %@", currAuth] showUI:FALSE];
-                        BOOL stillExpired = ([currAuth.expirationDate compare:[NSDate date]] == NSOrderedAscending);
-                        if (stillExpired) {
-                            // Although we called refresh, the token is still expired. Let's try to call a different
-                            // refresh method
-                            [LocalNotificationManager addNotification:[NSString stringWithFormat:
-                                                                       @"Existing auth token still expired after first refresh attempt, notifying user"] showUI:FALSE];
-                            /*
-                            [currAuth authorizeRequest:NULL
-                                              delegate:self
-                                     didFinishSelector:@selector(finishRefreshSelector:)];
-                             */
-                            NSDictionary *userInfo = @{
-                                                       NSLocalizedDescriptionKey: NSLocalizedString(@"Refresh token still expired.", nil),
-                                                       NSLocalizedFailureReasonErrorKey: NSLocalizedString(@"Unknown.", nil),
-                                                       NSLocalizedRecoverySuggestionErrorKey: NSLocalizedString(@"Sign out and Sign in again.", nil)
-                                                       };
-                            // TODO: Make a domain and error class
-                            NSError *refreshError = [NSError errorWithDomain:errorDomain code:authFailedNeedUserInput userInfo:userInfo];
-                            self.mCompletionHandler(NULL, NULL, refreshError);
-                        } else {
-                            [LocalNotificationManager addNotification:[NSString stringWithFormat:
-                                                                       @"Refresh is realy done, posting to host"] showUI:FALSE];
-                            assert(error == NULL);
-                            [self postToHost];
-                        }
-                    }
-                }];
+            self.mCompletionHandler(jsonData, NULL, error);
             } else {
-                [LocalNotificationManager addNotification:[NSString stringWithFormat:
-                                                           @"Existing auth token not expired, posting to host"] showUI:FALSE];
-                assert(expired == FALSE);
+            // TODO: have postToHost take the auth token as input instead of re-reading it
                 [self postToHost];
             }
-        }
-    }
+    } forceRefresh:FALSE];
 }
 
-- (BOOL)tryToAuthenticate:(NSData*)jsonData {
-    [LocalNotificationManager addNotification:[NSString stringWithFormat:
-                                               @"tryToAuthenticate called"] showUI:FALSE];
-    [[AuthCompletionHandler sharedInstance] registerFinishDelegate:self];
-    BOOL silentAuthResult = [[AuthCompletionHandler sharedInstance] trySilentAuthentication];
-    if (silentAuthResult == NO) {
-        [LocalNotificationManager addNotification:[NSString stringWithFormat:
-                                                   @"Need user input for authentication, need to signal user somehow"] showUI:FALSE];
-        [[AuthCompletionHandler sharedInstance] unregisterFinishDelegate:self];
-        NSDictionary *userInfo = @{
-                                   NSLocalizedDescriptionKey: NSLocalizedString(@"User authentication failed.", nil),
-                                   NSLocalizedFailureReasonErrorKey: NSLocalizedString(@"User information not available in keychain.", nil),
-                                   NSLocalizedRecoverySuggestionErrorKey: NSLocalizedString(@"Need to login and authorize access to email address.", nil)
-                                   };
-        // TODO: Make a domain and error class
-        NSError *authError = [NSError errorWithDomain:errorDomain code:authFailedNeedUserInput userInfo:userInfo];
-        self.mCompletionHandler(jsonData, NULL, authError);
-    } else {
-        [LocalNotificationManager addNotification:[NSString stringWithFormat:
-                                                   @"ready to authenticate, checking expiration"]
-                                           showUI:FALSE];
-        // So far, callback has not taken a long time...
-        // But callback may take a long time. In that case, we may want to return early.
-        // Also, callback will invoke mCompletionHandler in a separate thread, which won't
-        // work because all callbacks have to be in the main thread for this to succeed
-        // So we say that we are done here with no data
-        // However, in the callback handler, we set the backgroundFetchInterval to 10 mins
-        // So we will be called again, and won't have to invoke this call then
-        // mCompletionHandler(NULL, NULL, NULL);
-    }
-    return silentAuthResult;
-}
 
 - (void)postToHost {
     [LocalNotificationManager addNotification:[NSString stringWithFormat:
@@ -293,12 +197,20 @@ static inline NSString* NSStringFromBOOL(BOOL aBool) {
          
          I have run this through xcode and refreshed multiple times, and the memory consumption does not appear to increase.
          */
-        NSURLSession *session = [NSURLSession sessionWithConfiguration:[NSURLSessionConfiguration defaultSessionConfiguration]
+        GTMSessionFetcher *myFetcher = [_fetcherService fetcherWithRequest:request];
+        myFetcher.retryEnabled = YES;
+        myFetcher.bodyData = jsonData;
+        [myFetcher beginFetchWithCompletionHandler:^(NSData * _Nullable data, NSError * _Nullable error) {
+            self.mCompletionHandler(data, myFetcher.response, error);
+        }];
+        /*
+        NSURLSession *session = [NSURLSession sessionWithConfiguration:[NSURLSessionConfiguration backgroundSessionConfigurationWithIdentifier:request.URL.path]
                                                               delegate:nil
                                                          delegateQueue:[NSOperationQueue mainQueue]];
         NSLog(@"session queue = %@, mainQueue = %@", session.delegateQueue, [NSOperationQueue mainQueue]);
         NSURLSessionUploadTask *task = [session uploadTaskWithRequest:request fromData:jsonData completionHandler:self.mCompletionHandler];
         [task resume];
+         */
     }
 }
 
