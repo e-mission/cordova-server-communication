@@ -198,6 +198,7 @@ static inline NSString* NSStringFromBOOL(BOOL aBool) {
          I have run this through xcode and refreshed multiple times, and the memory consumption does not appear to increase.
          */
         GTMSessionFetcher *myFetcher = [_fetcherService fetcherWithRequest:request];
+        myFetcher.allowLocalhostRequest = YES;
         myFetcher.retryEnabled = YES;
         myFetcher.bodyData = jsonData;
         [myFetcher beginFetchWithCompletionHandler:^(NSData * _Nullable data, NSError * _Nullable error) {
