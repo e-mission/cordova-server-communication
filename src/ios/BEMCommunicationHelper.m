@@ -201,6 +201,7 @@ static inline NSString* NSStringFromBOOL(BOOL aBool) {
         myFetcher.allowLocalhostRequest = YES;
         myFetcher.retryEnabled = YES;
         myFetcher.bodyData = jsonData;
+        myFetcher.allowedInsecureSchemes = @[ @"http" ];
         [myFetcher beginFetchWithCompletionHandler:^(NSData * _Nullable data, NSError * _Nullable error) {
             self.mCompletionHandler(data, myFetcher.response, error);
         }];
