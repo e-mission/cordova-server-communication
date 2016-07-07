@@ -25,11 +25,11 @@ var ServerCommunication = {
         messageFiller(filledMessage);
         exec(successCallback, errorCallback, "ServerComm", "pushGetJSON", [relativeURL, filledMessage]);
     },
-    pushJSON: function(relativeUrl, objectLabel, objectJSON, successCallback, errorCallback) {
+    postUserPersonalData: function(relativeUrl, objectLabel, objectJSON, successCallback, errorCallback) {
         var msgFiller = function(message) {
             message[objectLabel] = objectJSON;
         };
-        ServerCommuniation.pushGetJSON(relativeUrl, msgFiller, successCallback, errorCallback);
+        ServerCommunication.pushGetJSON(relativeUrl, msgFiller, successCallback, errorCallback);
     },
     getUserPersonalData: function(relativeUrl, successCallback, errorCallback) {
         var msgFiller = function(message) {
