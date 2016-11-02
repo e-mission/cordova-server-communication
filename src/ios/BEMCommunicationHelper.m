@@ -89,18 +89,6 @@ static inline NSString* NSStringFromBOOL(BOOL aBool) {
     [executor execute];
 }
 
-+(void)setClientStats:(NSMutableDictionary*)statsToSend completionHandler:(void (^)(NSData *data, NSURLResponse *response, NSError *error))completionHandler {
-    NSMutableDictionary *toPush = [[NSMutableDictionary alloc] init];
-    [toPush setObject:statsToSend forKey:@"stats"];
-    
-    NSURL* kBaseURL = [[ConnectionSettings sharedInstance] getConnectUrl];
-    NSURL* kSetStatsURL = [NSURL URLWithString:kSetStatsPath
-                                      relativeToURL:kBaseURL];
-    
-    CommunicationHelper *executor = [[CommunicationHelper alloc] initPost:kSetStatsURL data:toPush completionHandler:completionHandler];
-    [executor execute];
-}
-
 +(void)phone_to_server:(NSArray *)entriesToPush completionHandler:(void (^)(NSData *data, NSURLResponse *response, NSError *error))completionHandler {
     NSMutableDictionary *toPush = [[NSMutableDictionary alloc] init];
     [toPush setObject:entriesToPush forKey:@"phone_to_server"];
