@@ -13,7 +13,8 @@
 
         [CommunicationHelper pushGetJSON:filledMessage toURL:relativeURL completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
             if (error != NULL) {
-                [self sendError:error callBackID:callbackId];
+                NSLog(@"Got error for command with URL %@", [[command arguments] objectAtIndex:0]);
+                [self sendError:[error localizedDescription] callBackID:callbackId];
             } else {
             NSError *parseError;
             NSDictionary *parsedResult = [NSJSONSerialization JSONObjectWithData:data
