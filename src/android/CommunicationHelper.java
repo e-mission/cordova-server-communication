@@ -113,7 +113,7 @@ public class CommunicationHelper {
             in.close();
         } else {
             Log.e(ctxt, R.class.toString(),"Failed to get JSON object");
-            throw new IOException();
+            throw new IOException(statusLine.toString());
         }
         connection.close();
         return result;
