@@ -7,7 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
-#import "GTMSessionFetcherService.h"
+#import <GTMSessionFetcher/GTMSessionFetcherService.h>
 
 @interface CommunicationHelper : NSObject
 // Wrappers for our specific functionality

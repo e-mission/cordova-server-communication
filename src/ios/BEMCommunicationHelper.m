@@ -14,7 +14,7 @@
 #import "BEMConnectionSettings.h"
 #import "BEMConstants.h"
 #import "LocalNotificationManager.h"
-#import "GTMSessionFetcher.h"
+#import <GTMSessionFetcher/GTMSessionFetcherService.h>
 
 // This is the base URL
 // We need to append the username to it, and then we need to authenticate the user as well
