@@ -10,11 +10,11 @@
 //
 
 #import "BEMCommunicationHelper.h"
-#import "AuthCompletionHandler.h"
 #import "BEMConnectionSettings.h"
 #import "BEMConstants.h"
 #import "LocalNotificationManager.h"
-#import "GTMSessionFetcher.h"
+#import <GTMSessionFetcher/GTMSessionFetcherService.h>
+#import "AuthCompletionHandler.h"
 
 // This is the base URL
 // We need to append the username to it, and then we need to authenticate the user as well
@@ -33,10 +33,6 @@ static NSString* kRegisterPath = @"/profile/create";
 static inline NSString* NSStringFromBOOL(BOOL aBool) {
     return aBool? @"YES" : @"NO";
 }
-
-@interface CommunicationHelper() <AuthCompletionDelegate> {
-}
-@end
 
 @implementation CommunicationHelper
 
@@ -143,18 +139,17 @@ static inline NSString* NSStringFromBOOL(BOOL aBool) {
         return;
     }
 
-    [[AuthCompletionHandler sharedInstance] getValidAuth:^(GTMOAuth2Authentication *auth,NSError* error) {
+    [[AuthCompletionHandler sharedInstance] getValidAuth:^(GIDGoogleUser *user,NSError* error) {
                     if (error != NULL) {
             self.mCompletionHandler(jsonData, NULL, error);
             } else {
-            // TODO: have postToHost take the auth token as input instead of re-reading it
-                [self postToHost];
+            [self postToHost:user.authentication.idToken];
             }
-    } forceRefresh:FALSE];
+    }];
 }
 
 
-- (void)postToHost {
+- (void)postToHost:(NSString*)idToken {
     [LocalNotificationManager addNotification:[NSString stringWithFormat:
                                                @"postToHost called with url = %@", self.mUrl] showUI:FALSE];
     NSMutableURLRequest *request = [[NSMutableURLRequest alloc]
@@ -164,7 +159,7 @@ static inline NSString* NSStringFromBOOL(BOOL aBool) {
     [request setValue:@"application/json"
         forHTTPHeaderField:@"Content-Type"];
     
-    NSString *userToken = [AuthCompletionHandler sharedInstance].getIdToken;
+    NSString *userToken = idToken;
     // At this point, we assume that all the authentication is done correctly
     // Should I try to verify making a remote call or add that to a debug screen?
     [self.mJsonDict setObject:userToken forKey:@"user"];
@@ -202,41 +197,6 @@ static inline NSString* NSStringFromBOOL(BOOL aBool) {
         [task resume];
          */
     }
-}
-
-- (void)finishedWithAuth:(GTMOAuth2Authentication *)auth error:(NSError *)error usingController:(UIViewController *)viewController {
-    NSLog(@"CommunicationHelper.finishedWithAuth called with auth = %@ and error = %@", auth, error);
-    if (error != NULL) {
-        NSLog(@"Got error %@ while authenticating", error);
-        self.mCompletionHandler(NULL, NULL, error);
-        // modify some kind of error count and notify that user needs to sign in again
-    } else {
-        [[AuthCompletionHandler sharedInstance] unregisterFinishDelegate:self];
-        [self postToHost];
-    }
-}
-
-- (void)finishRefreshSelector:(GTMOAuth2Authentication *)auth
-                      request:(NSMutableURLRequest *)request
-            finishedWithError:(NSError *)error {
-    [LocalNotificationManager addNotification:[NSString stringWithFormat:
-                                               @"CommunicationHelper.finishRefreshSelector called with auth = %@, request = %@, error = %@", auth, request, error] showUI:FALSE];
-
-    if (error != NULL) {
-        self.mCompletionHandler(NULL, NULL, error);
-    } else {
-        BOOL stillExpired = ([auth.expirationDate compare:[NSDate date]] == NSOrderedAscending);
-        if (stillExpired) {
-            [LocalNotificationManager addNotification:[NSString stringWithFormat:
-                                                       @"No more methods to try, I GIVE UP!"] showUI:TRUE];
-        } else {
-            // Check to see whether the sharedInstance auth token has been updated
-            [LocalNotificationManager addNotification:[NSString stringWithFormat:
-                                                       @"Auth token in the shared instance is %@, posting to host", [AuthCompletionHandler sharedInstance].currAuth] showUI:FALSE];
-            [self postToHost];
-        }
-    }
-    
 }
 
 @end
