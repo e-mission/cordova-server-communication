@@ -14,7 +14,7 @@
 #import "BEMConstants.h"
 #import "LocalNotificationManager.h"
 #import <GTMSessionFetcher/GTMSessionFetcherService.h>
-#import "AuthCompletionHandler.h"
+#import "AuthTokenCreationFactory.h"
 
 // This is the base URL
 // We need to append the username to it, and then we need to authenticate the user as well
@@ -139,7 +139,7 @@ static inline NSString* NSStringFromBOOL(BOOL aBool) {
         return;
     }
 
-    [[AuthCompletionHandler sharedInstance] getJWT:^(NSString *token, NSError *error) {
+    [[AuthTokenCreationFactory getInstance] getJWT:^(NSString *token, NSError *error) {
                     if (error != NULL) {
             self.mCompletionHandler(jsonData, NULL, error);
             } else {

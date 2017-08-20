@@ -20,8 +20,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 
 import edu.berkeley.eecs.emission.cordova.connectionsettings.ConnectionSettings;
-import edu.berkeley.eecs.emission.cordova.jwtauth.GoogleAccountManagerAuth;
-import edu.berkeley.eecs.emission.cordova.jwtauth.UserProfile;
+import edu.berkeley.eecs.emission.cordova.jwtauth.AuthTokenCreationFactory;
 import edu.berkeley.eecs.emission.cordova.unifiedlogger.Log;
 
 import edu.berkeley.eecs.emission.R;
@@ -181,6 +180,6 @@ public class CommunicationHelper {
     }
 
     private static String getTokenSync(Context ctxt) {
-        return new GoogleAccountManagerAuth(ctxt).getServerToken().await().getToken();
+        return AuthTokenCreationFactory.getInstance(ctxt).getServerToken().await().getToken();
     }
 }
