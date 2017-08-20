@@ -139,11 +139,11 @@ static inline NSString* NSStringFromBOOL(BOOL aBool) {
         return;
     }
 
-    [[AuthCompletionHandler sharedInstance] getValidAuth:^(GIDGoogleUser *user,NSError* error) {
+    [[AuthCompletionHandler sharedInstance] getJWT:^(NSString *token, NSError *error) {
                     if (error != NULL) {
             self.mCompletionHandler(jsonData, NULL, error);
             } else {
-            [self postToHost:user.authentication.idToken];
+            [self postToHost:token];
             }
     }];
 }

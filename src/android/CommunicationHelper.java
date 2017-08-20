@@ -32,8 +32,7 @@ public class CommunicationHelper {
     public static String readResults(Context ctxt, String cacheControlProperty)
             throws MalformedURLException, IOException {
         final String result_url = ConnectionSettings.getConnectURL(ctxt)+"/compare";
-        final String userName = UserProfile.getInstance(ctxt).getUserEmail();
-        final String userToken = GoogleAccountManagerAuth.getServerToken(ctxt, userName);
+        final String userToken = CommunicationHelper.getTokenSync(ctxt);
 
         final URL url = new URL(result_url);
         final HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -86,8 +85,7 @@ public class CommunicationHelper {
         msg.setHeader("Content-Type", "application/json");
 
         // Fill in the object
-        final String userName = UserProfile.getInstance(ctxt).getUserEmail();
-        final String userToken = GoogleAccountManagerAuth.getServerToken(ctxt, userName);
+        final String userToken = CommunicationHelper.getTokenSync(ctxt);
         filledJsonObject.put("user", userToken);
         msg.setEntity(new StringEntity(filledJsonObject.toString()));
 
@@ -180,5 +178,9 @@ public class CommunicationHelper {
         }
         connection.close();
         return result;
+    }
+
+    private static String getTokenSync(Context ctxt) {
+        return new GoogleAccountManagerAuth(ctxt).getServerToken().await().getToken();
     }
 }
