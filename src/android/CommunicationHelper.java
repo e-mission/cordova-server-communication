@@ -20,8 +20,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 
 import edu.berkeley.eecs.emission.cordova.connectionsettings.ConnectionSettings;
-import edu.berkeley.eecs.emission.cordova.jwtauth.GoogleAccountManagerAuth;
-import edu.berkeley.eecs.emission.cordova.jwtauth.UserProfile;
+import edu.berkeley.eecs.emission.cordova.jwtauth.AuthTokenCreationFactory;
 import edu.berkeley.eecs.emission.cordova.unifiedlogger.Log;
 
 import edu.berkeley.eecs.emission.R;
@@ -32,8 +31,7 @@ public class CommunicationHelper {
     public static String readResults(Context ctxt, String cacheControlProperty)
             throws MalformedURLException, IOException {
         final String result_url = ConnectionSettings.getConnectURL(ctxt)+"/compare";
-        final String userName = UserProfile.getInstance(ctxt).getUserEmail();
-        final String userToken = GoogleAccountManagerAuth.getServerToken(ctxt, userName);
+        final String userToken = CommunicationHelper.getTokenSync(ctxt);
 
         final URL url = new URL(result_url);
         final HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -86,8 +84,7 @@ public class CommunicationHelper {
         msg.setHeader("Content-Type", "application/json");
 
         // Fill in the object
-        final String userName = UserProfile.getInstance(ctxt).getUserEmail();
-        final String userToken = GoogleAccountManagerAuth.getServerToken(ctxt, userName);
+        final String userToken = CommunicationHelper.getTokenSync(ctxt);
         filledJsonObject.put("user", userToken);
         msg.setEntity(new StringEntity(filledJsonObject.toString()));
 
@@ -180,5 +177,9 @@ public class CommunicationHelper {
         }
         connection.close();
         return result;
+    }
+
+    private static String getTokenSync(Context ctxt) {
+        return AuthTokenCreationFactory.getInstance(ctxt).getServerToken().await().getToken();
     }
 }
