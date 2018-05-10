@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <plugin xmlns="http://www.phonegap.com/ns/plugins/1.0"
         id="edu.berkeley.eecs.emission.cordova.comm"
-        version="1.0.1">
+        version="1.2.0">
 
   <name>ServerComm</name>
   <description>Abstraction for communication settings, and for making both GET
@@ -26,6 +26,7 @@
                 url="https://github.com/e-mission/cordova-connection-settings.git"/>
   -->
   <framework src="src/android/httplib.gradle" custom="true" type="gradleReference" />
+  <hook type="after_plugin_install" src="hooks/android/addResourcesClassImport.js" />
   <platform name="android">
 
     <config-file target="res/xml/config.xml" parent="/*">
