@@ -81,12 +81,13 @@ public class CommunicationHelper {
         String result = "";
         HttpPost msg = new HttpPost(fullURL);
         System.out.println("Posting data to " + msg.getURI());
-        msg.setHeader("Content-Type", "application/json");
+        msg.setHeader("Content-Type", "application/json; charset=UTF-8");
 
         // Fill in the object
         final String userToken = CommunicationHelper.getTokenSync(ctxt);
         filledJsonObject.put("user", userToken);
-        msg.setEntity(new StringEntity(filledJsonObject.toString()));
+        StringEntity se = new StringEntity(filledJsonObject.toString(), "UTF-8");
+        msg.setEntity(se);
 
         // Perform the operation
         AndroidHttpClient connection = AndroidHttpClient.newInstance(ctxt.getString(R.string.app_name));
@@ -121,12 +122,13 @@ public class CommunicationHelper {
             throws IOException, JSONException {
         HttpPost msg = new HttpPost(fullURL);
         System.out.println("Posting data to " + msg.getURI());
-        msg.setHeader("Content-Type", "application/json");
+        msg.setHeader("Content-Type", "application/json; charset=UTF-8");
         JSONObject toPush = new JSONObject();
 
         toPush.put("user", userToken);
         toPush.put(objectLabel, jsonObjectOrArray);
-        msg.setEntity(new StringEntity(toPush.toString()));
+        StringEntity se = new StringEntity(toPush.toString(), "UTF-8");
+        msg.setEntity(se);
         AndroidHttpClient connection = AndroidHttpClient.newInstance(ctxt.getString(R.string.app_name));
         HttpResponse response = connection.execute(msg);
         System.out.println("Got response " + response + " with status " + response.getStatusLine());
@@ -142,12 +144,13 @@ public class CommunicationHelper {
             JSONException, IOException {
         String result = "";
         HttpPost msg = new HttpPost(fullURL);
-        msg.setHeader("Content-Type", "application/json");
+        msg.setHeader("Content-Type", "application/json; charset=UTF-8");
 
         //String result;
         JSONObject toPush = new JSONObject();
         toPush.put("user", userToken);
-        msg.setEntity(new StringEntity(toPush.toString()));
+        StringEntity se = new StringEntity(toPush.toString(), "UTF-8");
+        msg.setEntity(se);
 
         System.out.println("Posting data to "+msg.getURI());
 
