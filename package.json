@@ -1,7 +1,7 @@
 {
   "name": "em-cordova-server-communication",
-  "version": "1.0.1",
-  "description": "Simple package that stores all the connection settings that need to be configured",
+  "version": "1.2.1",
+  "description": "Package that handles communication with the server",
   "cordova": {
     "id": "em-cordova-server-communication",
     "platforms": [

@@ -155,8 +155,9 @@ static inline NSString* NSStringFromBOOL(BOOL aBool) {
     NSMutableURLRequest *request = [[NSMutableURLRequest alloc]
                                     initWithURL:self.mUrl
                                     cachePolicy:NSURLRequestUseProtocolCachePolicy timeoutInterval:500];
+    // UTF-8 fix from https://stackoverflow.com/questions/28229616/how-to-properly-encode-utf-8-in-ios-using-nsmutableurlrequest
     [request setHTTPMethod:@"POST"];
-    [request setValue:@"application/json"
+    [request setValue:@"application/json; charset=UTF-8"
         forHTTPHeaderField:@"Content-Type"];
     
     NSString *userToken = idToken;
