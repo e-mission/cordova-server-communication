@@ -10,3 +10,6 @@ which are GPL licensed.
 # Native libraries installed via maven/cocoapods
 
 This plugin does not depend on any external libraries
+
+| Module | License |
+|--------|---------|
