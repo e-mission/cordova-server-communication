@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <plugin xmlns="http://www.phonegap.com/ns/plugins/1.0"
-        id="edu.berkeley.eecs.emission.cordova.comm"
+        id="cordova-plugin-em-server-communication"
         version="1.2.2">
 
   <name>ServerComm</name>
