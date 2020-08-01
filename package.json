@@ -1,6 +1,6 @@
 {
   "name": "cordova-plugin-em-server-communication",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "description": "Package that handles communication with the server",
   "license": "BSD-3-clause",
   "cordova": {
