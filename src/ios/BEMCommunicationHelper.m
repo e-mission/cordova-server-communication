@@ -25,7 +25,6 @@
 static NSString* kUncommittedSectionsPath = @"/tripManager/getUnclassifiedSections";
 static NSString* kUsercachePutPath = @"/usercache/put";
 static NSString* kSaveSectionsPath = @"/tripManager/setSectionClassification";
-static NSString* kMovesCallbackPath = @"/movesCallback";
 static NSString* kSetStatsPath = @"/stats/set";
 static NSString* kCustomSettingsPath = @"/profile/settings";
 static NSString* kRegisterPath = @"/profile/create";
@@ -39,8 +38,8 @@ static inline NSString* NSStringFromBOOL(BOOL aBool) {
 +(void)getCustomSettings:(void (^)(NSData *data, NSURLResponse *response, NSError *error))completionHandler {
     NSLog(@"CommunicationHelper.getCustomSettings called!");
     NSMutableDictionary *blankDict = [[NSMutableDictionary alloc] init];
-    NSURL *kBaseURL = [[ConnectionSettings sharedInstance] getConnectUrl];
-    NSURL *kCustomSettingsURL = [NSURL URLWithString:kCustomSettingsPath relativeToURL:kBaseURL];
+    NSString *kBaseURLString = [[ConnectionSettings sharedInstance] getConnectString];
+    NSURL *kCustomSettingsURL = [NSURL URLWithString:[kBaseURLString stringByAppendingString:kCustomSettingsPath]];
     
     CommunicationHelper *executor = [[CommunicationHelper alloc] initPost:kCustomSettingsURL data:blankDict completionHandler:completionHandler];
     [executor execute];
@@ -49,8 +48,8 @@ static inline NSString* NSStringFromBOOL(BOOL aBool) {
 +(void)createUserProfile:(void (^)(NSData *data, NSURLResponse *response, NSError *error))completionHandler {
     NSLog(@"CommunicationHelper.getCustomSettings called!");
     NSMutableDictionary *blankDict = [[NSMutableDictionary alloc] init];
-    NSURL *kBaseURL = [[ConnectionSettings sharedInstance] getConnectUrl];
-    NSURL *kRegisterPathURL = [NSURL URLWithString:kRegisterPath relativeToURL:kBaseURL];
+    NSString *kBaseURLString = [[ConnectionSettings sharedInstance] getConnectString];
+    NSURL *kRegisterPathURL = [NSURL URLWithString:[kBaseURLString stringByAppendingString:kRegisterPath]];
     
     CommunicationHelper *executor = [[CommunicationHelper alloc] initPost:kRegisterPathURL data:blankDict completionHandler:completionHandler];
     [executor execute];
@@ -59,9 +58,8 @@ static inline NSString* NSStringFromBOOL(BOOL aBool) {
 +(void)getUnclassifiedSections:(void (^)(NSData *data, NSURLResponse *response, NSError *error))completionHandler {
     NSLog(@"CommunicationHelper.getUnclassifiedSections called!");
     NSMutableDictionary *blankDict = [[NSMutableDictionary alloc] init];
-    NSURL* kBaseURL = [[ConnectionSettings sharedInstance] getConnectUrl];
-    NSURL* kUncommittedSectionsURL = [NSURL URLWithString:kUncommittedSectionsPath
-                                            relativeToURL:kBaseURL];
+    NSString* kBaseURLString = [[ConnectionSettings sharedInstance] getConnectString];
+    NSURL* kUncommittedSectionsURL = [NSURL URLWithString:[kBaseURLString stringByAppendingString:kUncommittedSectionsPath]];
     CommunicationHelper *executor = [[CommunicationHelper alloc] initPost:kUncommittedSectionsURL data:blankDict completionHandler:completionHandler];
     [executor execute];
 }
@@ -69,19 +67,9 @@ static inline NSString* NSStringFromBOOL(BOOL aBool) {
 +(void)setClassifiedSections:(NSArray*)sectionDicts completionHandler:(void (^)(NSData *data, NSURLResponse *response, NSError *error))completionHandler {
     NSMutableDictionary *toPush = [[NSMutableDictionary alloc] init];
     [toPush setObject:sectionDicts forKey:@"updates"];
-    NSURL* kBaseURL = [[ConnectionSettings sharedInstance] getConnectUrl];
-    NSURL* kSaveSectionsURL = [NSURL URLWithString:kSaveSectionsPath
-                                            relativeToURL:kBaseURL];
+    NSString* kBaseURLString = [[ConnectionSettings sharedInstance] getConnectString];
+    NSURL* kSaveSectionsURL = [NSURL URLWithString:[kBaseURLString stringByAppendingString:kSaveSectionsPath]];
     CommunicationHelper *executor = [[CommunicationHelper alloc] initPost:kSaveSectionsURL data:toPush completionHandler:completionHandler];
-    [executor execute];
-}
-
-+(void)movesCallback:(NSMutableDictionary*)movesParams completionHandler:(void (^)(NSData *data, NSURLResponse *response, NSError *error))completionHandler {
-    NSURL* kBaseURL = [[ConnectionSettings sharedInstance] getConnectUrl];
-    NSURL* kMovesCallbackURL = [NSURL URLWithString:kMovesCallbackPath
-                                     relativeToURL:kBaseURL];
-
-    CommunicationHelper *executor = [[CommunicationHelper alloc] initPost:kMovesCallbackURL data:movesParams completionHandler:completionHandler];
     [executor execute];
 }
 
@@ -89,9 +77,8 @@ static inline NSString* NSStringFromBOOL(BOOL aBool) {
     NSMutableDictionary *toPush = [[NSMutableDictionary alloc] init];
     [toPush setObject:entriesToPush forKey:@"phone_to_server"];
     
-    NSURL* kBaseURL = [[ConnectionSettings sharedInstance] getConnectUrl];
-    NSURL* kUsercachePutURL = [NSURL URLWithString:kUsercachePutPath
-                                 relativeToURL:kBaseURL];
+    NSString* kBaseURLString = [[ConnectionSettings sharedInstance] getConnectString];
+    NSURL* kUsercachePutURL = [NSURL URLWithString:[kBaseURLString stringByAppendingString:kUsercachePutPath]];
     
     CommunicationHelper *executor = [[CommunicationHelper alloc] initPost:kUsercachePutURL data:toPush completionHandler:completionHandler];
     [executor execute];
@@ -100,9 +87,10 @@ static inline NSString* NSStringFromBOOL(BOOL aBool) {
 +(void)pushGetJSON:(NSDictionary*)toSend toURL:(NSString*)relativeURL completionHandler:(void (^)(NSData *data, NSURLResponse *response, NSError *error))completionHandler {
     NSMutableDictionary *toPush = [NSMutableDictionary dictionaryWithDictionary:toSend];
     
-    NSURL* kBaseURL = [[ConnectionSettings sharedInstance] getConnectUrl];
-    NSURL* absoluteURL = [NSURL URLWithString:relativeURL
-                                 relativeToURL:kBaseURL];
+    NSString* kBaseURLString = [[ConnectionSettings sharedInstance] getConnectString];
+    NSString* absoluteURLString = [kBaseURLString stringByAppendingString:relativeURL];
+    NSURL* absoluteURL = [NSURL URLWithString:absoluteURLString];
+    // NSLog(@"absoluteURL right after creation = %@", [absoluteURL absoluteURL]);
     
     CommunicationHelper *executor = [[CommunicationHelper alloc] initPost:absoluteURL data:toPush completionHandler:completionHandler];
     [executor execute];
