@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <plugin xmlns="http://www.phonegap.com/ns/plugins/1.0"
         id="cordova-plugin-em-server-communication"
-        version="1.2.4">
+        version="1.2.5">
 
   <name>ServerComm</name>
   <description>Abstraction for communication settings, and for making both GET
@@ -47,6 +47,14 @@
         <param name="ios-package" value="BEMCommunicationHelperPlugin" />
       </feature>
     </config-file>
+    <podspec>
+      <config>
+        <source url="https://cdn.cocoapods.org/"/>
+      </config>
+      <pods use-frameworks="true">
+        <pod name="GTMSessionFetcher" spec="~> 3.1.0" />
+      </pods>
+    </podspec>
 
     <header-file src="src/ios/BEMCommunicationHelper.h"/>
     <source-file src="src/ios/BEMCommunicationHelper.m"/>

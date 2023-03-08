@@ -20,7 +20,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 
 import edu.berkeley.eecs.emission.cordova.connectionsettings.ConnectionSettings;
-import edu.berkeley.eecs.emission.cordova.jwtauth.AuthTokenCreationFactory;
+import edu.berkeley.eecs.emission.cordova.opcodeauth.AuthTokenCreationFactory;
 import edu.berkeley.eecs.emission.cordova.unifiedlogger.Log;
 
 import edu.berkeley.eecs.emission.R;
