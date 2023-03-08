@@ -47,6 +47,14 @@
         <param name="ios-package" value="BEMCommunicationHelperPlugin" />
       </feature>
     </config-file>
+    <podspec>
+      <config>
+        <source url="https://cdn.cocoapods.org/"/>
+      </config>
+      <pods use-frameworks="true">
+        <pod name="GTMSessionFetcher" spec="~> 3.1.0" />
+      </pods>
+    </podspec>
 
     <header-file src="src/ios/BEMCommunicationHelper.h"/>
     <source-file src="src/ios/BEMCommunicationHelper.m"/>
