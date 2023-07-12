@@ -183,6 +183,6 @@ public class CommunicationHelper {
     }
 
     private static String getTokenSync(Context ctxt) {
-        return AuthTokenCreationFactory.getInstance(ctxt).getServerToken().await().getToken();
+        return AuthTokenCreationFactory.getInstance(ctxt).getOPCode().await().getOPCode();
     }
 }
