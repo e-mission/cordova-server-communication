@@ -21,7 +21,10 @@
                                                                 options:kNilOptions
                                                                   error: &parseError];
             if (parseError != NULL) {
-                [self sendError:parseError callBackID:callbackId];
+                NSString *msg = [NSString stringWithFormat: @"Response was not JSON: %@ Error: %@",
+                                [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding],
+                                parseError];
+                [self sendError:msg callBackID:callbackId];
             }
             CDVPluginResult* result = [CDVPluginResult
                                        resultWithStatus:CDVCommandStatus_OK

@@ -24,11 +24,15 @@ public class CommunicationHelperPlugin extends CordovaPlugin {
                 cordova.getThreadPool().execute(new Runnable() {
                     public void run() {
                         try {
-                String resultString = CommunicationHelper.pushGetJSON(ctxt, fullURL, filledMessage);
-                callbackContext.success(new JSONObject(resultString));
-            } catch (Exception e) {
-                callbackContext.error("While pushing/getting from server "+e.getMessage());
-            }
+                            String resultString = CommunicationHelper.pushGetJSON(ctxt, fullURL, filledMessage);
+                            callbackContext.success(new JSONObject(resultString));
+                        } catch (JSONException e) {
+                            callbackContext.error("While pushing/getting from server, "
+                              + "Response was not JSON: " + resultString
+                              + " Exception: "+e.getMessage());
+                        } catch (Exception e) {
+                            callbackContext.error("While pushing/getting from server, "+e.getMessage());
+                        }
                     }
                 });
             } catch (Exception e) {
