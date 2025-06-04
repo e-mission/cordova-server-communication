@@ -29,6 +29,8 @@ static NSString* kSetStatsPath = @"/stats/set";
 static NSString* kCustomSettingsPath = @"/profile/settings";
 static NSString* kRegisterPath = @"/profile/create";
 
+static NSString* sessionUUID = nil;
+
 static inline NSString* NSStringFromBOOL(BOOL aBool) {
     return aBool? @"YES" : @"NO";
 }
@@ -113,6 +115,18 @@ static inline NSString* NSStringFromBOOL(BOOL aBool) {
 
 -(void)execute {
     [LocalNotificationManager addNotification:@"CommunicationHelper.execute called!" showUI:FALSE];
+    
+    // Create unique UUIDs to trace requests from this session (useful for e2e debugging)
+    if (sessionUUID == nil) {
+        sessionUUID = [[NSUUID UUID] UUIDString];
+    }
+    NSString *requestUUID = [[NSUUID UUID] UUIDString];
+    [LocalNotificationManager addNotification:[NSString stringWithFormat:
+                                               @"CommunicationHelper.execute with requestUUID = %@, sessionUUID = %@",
+                                               requestUUID, sessionUUID] showUI:FALSE];
+    [self.mJsonDict setObject:requestUUID forKey:@"requestUUID"];
+    [self.mJsonDict setObject:sessionUUID forKey:@"sessionUUID"];
+
     // First, we parse the dictionary because we need the data to call the completion function anyway
     // Note that this data does not contain the user token, and should not be sent to the server
     NSError *parseError;
@@ -121,25 +135,30 @@ static inline NSString* NSStringFromBOOL(BOOL aBool) {
                                                          error:&parseError];
     if (parseError != NULL) {
         [LocalNotificationManager addNotification:[NSString stringWithFormat:
-                                                   @"parseError = %@, calling completion handler",
-                                                   parseError]];
+                                                   @"parseError = %@, requestUUID = %@, sessionUUID = %@, calling completion handler",
+                                                   parseError, requestUUID, sessionUUID]];
         self.mCompletionHandler(jsonData, NULL, parseError);
         return;
     }
 
     [[AuthTokenCreationFactory getInstance] getJWT:^(NSString *token, NSError *error) {
-                    if (error != NULL) {
+        if (error != NULL) {
+            [LocalNotificationManager addNotification:[NSString stringWithFormat:
+                                                       @"Error getting JWT token: %@, requestUUID = %@, sessionUUID = %@, calling completion handler",
+                                                       error, requestUUID, sessionUUID]];
             self.mCompletionHandler(jsonData, NULL, error);
-            } else {
+        } else {
             [self postToHost:token];
-            }
+        }
     }];
 }
 
 
 - (void)postToHost:(NSString*)idToken {
+    NSString *requestUUID = [self.mJsonDict objectForKey:@"requestUUID"];
     [LocalNotificationManager addNotification:[NSString stringWithFormat:
-                                               @"postToHost called with url = %@", self.mUrl] showUI:FALSE];
+                                               @"postToHost called, requestUUID = %@, sessionUUID = %@, url = %@",
+                                               requestUUID, sessionUUID, self.mUrl] showUI:FALSE];
     NSMutableURLRequest *request = [[NSMutableURLRequest alloc]
                                     initWithURL:self.mUrl
                                     cachePolicy:NSURLRequestUseProtocolCachePolicy timeoutInterval:500];
@@ -175,6 +194,9 @@ static inline NSString* NSStringFromBOOL(BOOL aBool) {
         myFetcher.bodyData = jsonData;
         myFetcher.allowedInsecureSchemes = @[ @"http" ];
         [myFetcher beginFetchWithCompletionHandler:^(NSData * _Nullable data, NSError * _Nullable error) {
+            [LocalNotificationManager addNotification:[NSString stringWithFormat:
+                                                       @"postToHost completed, requestUUID = %@, sessionUUID = %@, data length = %lu, error = %@",
+                                                       requestUUID, sessionUUID, (unsigned long)data.length, error]];
             self.mCompletionHandler(data, myFetcher.response, error);
         }];
         /*
