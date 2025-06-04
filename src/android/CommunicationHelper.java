@@ -18,6 +18,7 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.UUID;
 
 import edu.berkeley.eecs.emission.cordova.connectionsettings.ConnectionSettings;
 import edu.berkeley.eecs.emission.cordova.opcodeauth.AuthTokenCreationFactory;
@@ -27,6 +28,7 @@ import edu.berkeley.eecs.emission.R;
 
 public class CommunicationHelper {
     public static final String TAG = "CommunicationHelper";
+    public static final String SESSION_UUID = UUID.randomUUID().toString();
 
     public static String readResults(Context ctxt, String cacheControlProperty)
             throws MalformedURLException, IOException {
@@ -51,7 +53,8 @@ public class CommunicationHelper {
 
         final InputStream inputStream = connection.getInputStream();
         final int code = connection.getResponseCode();
-        Log.d(ctxt, TAG, "Update Connection response status " + connection.getResponseCode());
+        Log.d(ctxt, TAG, "Update Connection response status " + connection.getResponseCode()
+            + " for sessionUUID " + SESSION_UUID)
         if (connection.getResponseCode() != HttpURLConnection.HTTP_OK) {
             throw new RuntimeException("Failed : HTTP error code : " + connection.getResponseCode());
         }
@@ -86,6 +89,10 @@ public class CommunicationHelper {
         // Fill in the object
         final String userToken = CommunicationHelper.getTokenSync(ctxt);
         filledJsonObject.put("user", userToken);
+        // Create a unique UUID to trace this request (useful for e2e debugging)
+        String requestUUID = UUID.randomUUID().toString();
+        filledJsonObject.put("requestUUID", requestUUID);
+        filledJsonObject.put("sessionUUID", SESSION_UUID);
         StringEntity se = new StringEntity(filledJsonObject.toString(), "UTF-8");
         msg.setEntity(se);
 
@@ -93,7 +100,8 @@ public class CommunicationHelper {
         AndroidHttpClient connection = AndroidHttpClient.newInstance(ctxt.getString(R.string.app_name));
         HttpResponse response = connection.execute(msg);
         StatusLine statusLine = response.getStatusLine();
-        Log.i(ctxt, TAG, "Got response "+response+" with status "+statusLine);
+        Log.i(ctxt, TAG, "Got response " + response + " with status " + statusLine +
+            " for requestUUID " + requestUUID + ", sessionUUID " + SESSION_UUID);
         int statusCode = statusLine.getStatusCode();
 
         if(statusCode == 200){
@@ -105,12 +113,15 @@ public class CommunicationHelper {
             }
             result = builder.toString();
             System.out.println("Result Summary JSON = "+
-                result.substring(0, Math.min(200, result.length())) + " length "+result.length());
+                result.substring(0, Math.min(200, result.length())) + " length "+result.length() +
+                " for requestUUID "+requestUUID + ", sessionUUID " + SESSION_UUID);
             Log.i(ctxt, TAG, "Result Summary JSON = "+
-                result.substring(0, Math.min(200, result.length())) + " length "+result.length());
+                result.substring(0, Math.min(200, result.length())) + " length "+result.length() +
+                " for requestUUID "+requestUUID + ", sessionUUID " + SESSION_UUID);
             in.close();
         } else {
-            Log.e(ctxt, R.class.toString(),"Failed to get JSON object");
+            Log.e(ctxt, R.class.toString(),"Failed to get JSON object "
+                  + "for requestUUID " + requestUUID + ", sessionUUID " + SESSION_UUID);
             throw new IOException(statusLine.toString());
         }
         connection.close();
@@ -126,13 +137,18 @@ public class CommunicationHelper {
         JSONObject toPush = new JSONObject();
 
         toPush.put("user", userToken);
+        // Create a unique UUID to trace this request (useful for e2e debugging)
+        String requestUUID = UUID.randomUUID().toString();
+        toPush.put("requestUUID", requestUUID);
+        toPush.put("sessionUUID", SESSION_UUID);
         toPush.put(objectLabel, jsonObjectOrArray);
         StringEntity se = new StringEntity(toPush.toString(), "UTF-8");
         msg.setEntity(se);
         AndroidHttpClient connection = AndroidHttpClient.newInstance(ctxt.getString(R.string.app_name));
         HttpResponse response = connection.execute(msg);
         System.out.println("Got response " + response + " with status " + response.getStatusLine());
-        Log.i(ctxt, TAG, "Got response "+response+" with status"+response.getStatusLine());
+        Log.i(ctxt, TAG, "Got response "+response+" with status"+response.getStatusLine() +
+            " for requestUUID "+requestUUID+", sessionUUID "+SESSION_UUID);
         connection.close();
         if (response.getStatusLine().getStatusCode() != 200) {
             throw new IOException();
@@ -149,16 +165,22 @@ public class CommunicationHelper {
         //String result;
         JSONObject toPush = new JSONObject();
         toPush.put("user", userToken);
+        // Create a unique UUID to trace this request (useful for e2e debugging)
+        String requestUUID = UUID.randomUUID().toString();
+        toPush.put("requestUUID", requestUUID);
+        toPush.put("sessionUUID", SESSION_UUID);
         StringEntity se = new StringEntity(toPush.toString(), "UTF-8");
         msg.setEntity(se);
 
-        System.out.println("Posting data to "+msg.getURI());
+        System.out.println("Posting data to "+msg.getURI() +
+            " with requestUUID "+requestUUID);
 
         //create connection
         AndroidHttpClient connection = AndroidHttpClient.newInstance(R.class.toString());
         HttpResponse response = connection.execute(msg);
         StatusLine statusLine = response.getStatusLine();
-        Log.i(ctxt, TAG, "Got response "+response+" with status "+statusLine);
+        Log.i(ctxt, TAG, "Got response "+response+" with status "+statusLine
+            + " for requestUUID "+requestUUID+", sessionUUID "+SESSION_UUID);
         int statusCode = statusLine.getStatusCode();
 
         if(statusCode == 200){
@@ -172,10 +194,12 @@ public class CommunicationHelper {
             System.out.println("Result Summary JSON = "+
                 result.substring(0, Math.min(200, result.length())) + " length "+result.length());
             Log.i(ctxt, TAG, "Result Summary JSON = "+
-                result.substring(0, Math.min(200, result.length())) + " length "+result.length());
+                result.substring(0, Math.min(200, result.length())) + " length "+result.length() +
+                " for requestUUID "+requestUUID+", sessionUUID "+SESSION_UUID);
             in.close();
         } else {
-            Log.e(ctxt, R.class.toString(),"Failed to get JSON object");
+            Log.e(ctxt, R.class.toString(),"Failed to get JSON object"
+                 + "for requestUUID "+ requestUUID + ", sessionUUID "+SESSION_UUID);
             throw new IOException();
         }
         connection.close();
