@@ -28,22 +28,38 @@ public class CommunicationHelperPlugin extends CordovaPlugin {
                              try {
                                callbackContext.success(new JSONObject(resultString));
                              } catch (JSONException e) {
-                                callbackContext.error("While pushing/getting from server, "
+                                callbackContext.error(errorJSON("While pushing/getting from server, "
                                   + "Response was not JSON: " + resultString
-                                  + " Exception: "+e.getMessage());
+                                  + " Exception: "+e.getMessage(), e));
                              }
                         } catch (Exception e) {
-                            callbackContext.error("While pushing/getting from server, "+e.getMessage());
+                            callbackContext.error(errorJSON("While pushing/getting from server, "+e.getMessage(), e));
                         }
                     }
                 });
             } catch (Exception e) {
-                callbackContext.error("While pushing/getting from server "+e.getMessage());
+                callbackContext.error(errorJSON("While pushing/getting from server "+e.getMessage(), e));
             }
             return true;
         } else {
             return false;
         }
+    }
+
+    private static JSONObject errorJSON(String message, Exception e) {
+        JSONObject err = new JSONObject();
+        try {
+            err.put("message", message);
+            if (e instanceof CommunicationHelper.HttpStatusException) {
+                CommunicationHelper.HttpStatusException hse = (CommunicationHelper.HttpStatusException) e;
+                err.put("status", hse.status);
+                err.put("body", hse.body);
+            }
+        } catch (JSONException je) {
+            // put() throws for a null key or a NaN/infinite double; our keys are literals and values are strings/ints, so this is unreachable
+            android.util.Log.e("CommunicationHelperPlugin", "Unexpected error building error JSON for: " + message, je);
+        }
+        return err;
     }
 }
 

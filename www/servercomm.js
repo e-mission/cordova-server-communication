@@ -14,6 +14,34 @@ var exec = require("cordova/exec")
  * if we switch to a newer and cooler library (websockets? pub/sub? capnproto?).
  */
 
+/*
+ * Native code reports errors as {message, status?, body?}. Convert to an Error
+ * so that existing callers that stringify the error keep working.
+ */
+function toServerCommError(err) {
+    if (err instanceof Error) {
+        return err;
+    }
+    var nativeErr = (err && typeof err === 'object') ? err : { message: String(err) };
+    var body = nativeErr.body;
+    if (typeof body === 'string') {
+        try {
+            body = JSON.parse(body);
+        } catch (e) {
+            // non-JSON body, e.g. an HTML error page; leave as a string
+        }
+    }
+    var message = nativeErr.message;
+    if (body && typeof body === 'object' && typeof body.error === 'string') {
+        message += ' - ' + body.error;
+    }
+    var error = new Error(message);
+    error.name = 'ServerCommError';
+    error.status = nativeErr.status;
+    error.body = body;
+    return error;
+}
+
 var ServerCommunication = {
     /*
      * This is only used for communication with our own server. For
@@ -23,7 +51,12 @@ var ServerCommunication = {
     pushGetJSON: function(relativeURL, messageFiller, successCallback, errorCallback) {
         filledMessage = {};
         messageFiller(filledMessage);
-        exec(successCallback, errorCallback, "ServerComm", "pushGetJSON", [relativeURL, filledMessage]);
+        var wrappedErrorCallback = function(err) {
+            if (errorCallback) {
+                errorCallback(toServerCommError(err));
+            }
+        };
+        exec(successCallback, wrappedErrorCallback, "ServerComm", "pushGetJSON", [relativeURL, filledMessage]);
     },
     postUserPersonalData: function(relativeUrl, objectLabel, objectJSON, successCallback, errorCallback) {
         var msgFiller = function(message) {

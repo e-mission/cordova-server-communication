@@ -28,6 +28,17 @@ import edu.berkeley.eecs.emission.R;
 public class CommunicationHelper {
     public static final String TAG = "CommunicationHelper";
 
+    public static class HttpStatusException extends IOException {
+        public final int status;
+        public final String body;
+
+        public HttpStatusException(int status, String statusLine, String body) {
+            super(statusLine);
+            this.status = status;
+            this.body = body;
+        }
+    }
+
     public static String readResults(Context ctxt, String cacheControlProperty)
             throws MalformedURLException, IOException {
         final String result_url = ConnectionSettings.getConnectURL(ctxt)+"/compare";
@@ -111,7 +122,17 @@ public class CommunicationHelper {
             in.close();
         } else {
             Log.e(ctxt, R.class.toString(),"Failed to get JSON object");
-            throw new IOException(statusLine.toString());
+            StringBuilder errBody = new StringBuilder();
+            if (response.getEntity() != null) {
+                BufferedReader in = new BufferedReader(new InputStreamReader(response.getEntity().getContent()));
+                String currLine;
+                while ((currLine = in.readLine()) != null) {
+                    errBody.append(currLine).append("\n");
+                }
+                in.close();
+            }
+            connection.close();
+            throw new HttpStatusException(statusCode, statusLine.toString(), errBody.toString());
         }
         connection.close();
         return result;
